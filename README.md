@@ -71,6 +71,40 @@ Ambos archivos tienen la misma estructura. Los primeros registros de la hoja son
 | `Indicator Code` | Código del indicador |
 | `1960` a `2025` | Valor del indicador en cada año, una columna por año (66 columnas) |
  
+---
 
+## Diagnóstico de calidad de los datos
+
+Se revisó la hoja `Data` de ambos archivos comparando su formato, su clave de acceso y la estandarización de los datos. En general las dos fuentes están bien construidas y son consistentes entre sí, pero presentan algunos problemas que deben tratarse antes de integrarlas.
+
+### Formato
+
+Los dos archivos provienen del mismo portal y tienen exactamente la misma estructura: 266 registros y 70 columnas, de las cuales cuatro son descriptivas (`Country Name`, `Country Code`, `Indicator Name` e `Indicator Code`) y 66 corresponden a los años de 1960 a 2025. El primer problema es que la tabla de datos no empieza en la primera fila de la hoja, ya que las tres primeras filas contienen información de la fuente y la fecha de actualización, por lo que el encabezado real está en la fila 4 y hay que omitir esas filas al importar. Además, los datos están en formato ancho (un año por columna), lo que dificulta consultar y relacionar la información, y los años son números en el encabezado y no texto, algo que debe cuidarse al cargarlos a una base de datos. Por último, las columnas `Indicator Name` e `Indicator Code` tienen el mismo valor en todas las filas de cada archivo, por lo que no aportan información por registro.
+
+### Clave de acceso
+
+La columna `Country Code` identifica a cada país o agregado con un código de tres letras. En ambos archivos no tiene valores vacíos ni repetidos, y los 266 códigos son exactamente los mismos en las dos fuentes, sin registros que existan en una y no en la otra. Los nombres (`Country Name`) también coinciden en todos los casos, aunque el código es más confiable porque el nombre puede variar. No se encontraron espacios sobrantes al inicio o al final de los textos de estas columnas.
+
+El problema de esta clave es que no solo identifica países, sino también agregados regionales y de ingreso (por ejemplo "World" o "Euro area") e incluso un registro llamado "Not classified". Estos registros comparten estructura con los países y pueden distorsionar cualquier comparación entre países si no se separan.
+
+### Valores faltantes
+
+Ambos archivos tienen valores vacíos, pero en distinta proporción. La falta de datos se concentra en los años más antiguos y en ciertos territorios, ya que 4 registros del PIB y 25 de la inflación no tienen ningún dato en todo el periodo (como Cuba, Puerto Rico o Gibraltar, entre otros). Como las dos fuentes no tienen los mismos vacíos, al integrarlas habrá años en que un país tendrá un indicador pero no el otro.
+
+### Estandarización
+
+Los dos indicadores están en unidades y escalas distintas: el PIB per cápita está en dólares y llega a más de 288 mil, mientras que la inflación es un porcentaje que va desde valores negativos hasta más de 23 mil. Los valores numéricos tienen muchos decimales (hasta 15 cifras) que conviene redondear. En la inflación aparecen 568 valores negativos, que corresponden a deflación y son válidos, y 167 valores superiores al 100 %, con un máximo de 23.773 %, que corresponden a episodios de hiperinflación y deben revisarse porque pueden distorsionar promedios y comparaciones.
+
+En cuanto a los textos, los nombres están en inglés y algunos usan abreviaturas o formatos poco uniformes, como "Korea, Dem. People's Rep.", "Somalia, Fed. Rep." o "Puerto Rico (US)", que además incluyen comas y apóstrofes que pueden causar problemas al cargarlos a una base de datos. No se detectaron registros duplicados en ninguno de los dos archivos.
+
+### Resumen de problemas a tratar
+
+- Filas informativas antes del encabezado real.
+- Datos en formato ancho, con los años como columnas.
+- Valores faltantes distintos en cada fuente, con mayor impacto en la inflación.
+- Mezcla de países con agregados regionales y un registro "Not classified".
+- Escalas y unidades distintas entre los dos indicadores.
+- Valores extremos de inflación y exceso de decimales.
+- Nombres con abreviaturas y caracteres especiales.
 
 
